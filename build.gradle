@@ -1,0 +1,127 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+buildscript {
+	ext {
+		springBootVersion = '2.0.4.RELEASE'
+	}
+	repositories {
+		mavenCentral()
+		maven { url 'https://repo.spring.io/libs-snapshot' }
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+	}
+}
+
+plugins {
+	id "org.springframework.boot" version "2.0.4.RELEASE"
+}
+group = 'edu.vtac'
+version = '0.0.1-SNAPSHOT'
+
+apply plugin: "eclipse"
+apply plugin: "java"
+apply plugin: "war"
+
+
+defaultTasks 'clean', 'jboss'
+
+
+compileJava {
+	sourceCompatibility = 1.8 
+	targetCompatibility = 1.8
+	options.encoding = "UTF-8"
+}
+
+
+repositories {
+	 maven { url "http://repo.maven.apache.org/maven2" }
+	 maven { url "https://repo.spring.io/libs-release" }
+	 maven { url "https://repo.spring.io/milestone" }  // for Reactor
+	 mavenCentral()
+}
+
+
+dependencies {
+	
+	/*
+	compile('org.springframework.boot:spring-boot-starter-data-jpa:' + springBootVersion) {
+		exclude module: 'spring-boot-starter-logging'
+	}*/
+	
+	/*
+	compile('org.springframework.boot:spring-boot-starter-security:' + springBootVersion){
+		exclude module: 'spring-boot-starter-logging'
+	}*/
+	
+	compile('org.springframework.boot:spring-boot-starter-web:' + springBootVersion) {
+		exclude module: "spring-boot-starter-tomcat"
+		exclude module: 'spring-boot-starter-logging'
+	}
+	compile('org.springframework.boot:spring-boot-starter-web-services:' + springBootVersion){
+		exclude module: "spring-boot-starter-tomcat"
+		exclude module: 'spring-boot-starter-logging'
+	}
+	// https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
+	
+	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
+
+	compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.25'
+	
+	compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.9.7'
+	
+	// Dependencies for using swagger - live API documentation
+	compile group: 'io.springfox', name: 'springfox-swagger2', version: '2.9.2'
+	compile group: 'io.springfox', name: 'springfox-swagger-ui',  version: '2.9.2'
+	compile group: 'io.springfox', name: 'springfox-bean-validators', version: '2.4.0'
+	compile group: 'org.thymeleaf', name: 'thymeleaf', version: '2.0.5'
+	
+	compile group: 'org.hibernate', name: 'hibernate-validator', version: '4.2.0.Final'
+	
+	// https://mvnrepository.com/artifact/javax.servlet/servlet-api
+	compileOnly group: 'javax.servlet', name: 'servlet-api', version: '2.5'
+	
+	compile group: 'jstl', name: 'jstl', version: '1.2'
+	
+	compile group: 'org.jboss.resteasy', name: 'resteasy-client', version: '3.6.2.Final'
+	compile group: 'org.jboss.resteasy', name: 'resteasy-jackson-provider', version: '3.6.2.Final'
+	
+	
+	testCompile('org.springframework.boot:spring-boot-starter-test:' + springBootVersion)
+	testCompile("junit:junit")
+}
+
+
+test {
+	exclude '**/*.java'
+}
+
+
+task jboss(type: Copy, dependsOn: build) {
+	println "Deploying project to JBOSS"
+	 
+	Properties props = new Properties()
+	props.load(new FileInputStream("$project.rootDir/gradle.properties"))
+	def jbossHomeToCopy = props.getProperty("jbossHome")
+
+	doFirst {
+		println "Do First"
+		def jbossHomeToCopyFile = new File(jbossHomeToCopy + "")
+		if (jbossHomeToCopyFile.exists() == false) throw new GradleException(jbossHomeToCopy + " dose not exists,\n\t please specify (jbossHome) jboss home directory in vtac_common/gradle.propertis file \n\t or specify the correct jboss home directory in same file ")
+	}
+	
+	def taskFileName = ""
+	
+	from war.archivePath
+	into jbossHomeToCopy
+	
+	rename { fileName ->
+		fileName = rootProject.name + ".war"
+		taskFileName = fileName
+	}
+	doLast {
+		println "FILE IS COPIED TO " + jbossHomeToCopy + "/" + taskFileName
+	}
+		
+}
+
