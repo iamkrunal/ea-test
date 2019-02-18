@@ -16,7 +16,7 @@ buildscript {
 plugins {
 	id "org.springframework.boot" version "2.0.4.RELEASE"
 }
-group = 'edu.vtac'
+group = 'com.ea'
 version = '0.0.1-SNAPSHOT'
 
 apply plugin: "eclipse"
